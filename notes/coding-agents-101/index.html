@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notes on working with coding agents</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --fg: #1a1a1a;
+    --fg-dim: #666;
+    --fg-link: #2a6f97;
+    --fg-link-hover: #1a4f6f;
+    --hover: #f0f0f0;
+    --line: #e0e0e0;
+    --accent: #2a6f97;
+    --section-bg: transparent;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a1a;
+      --fg: #e0e0e0;
+      --fg-dim: #999;
+      --fg-link: #6ab0d6;
+      --fg-link-hover: #8cc8e8;
+      --hover: #252525;
+      --line: #333;
+      --accent: #6ab0d6;
+      --section-bg: transparent;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    font-size: 17px;
+    line-height: 1.7;
+    background: var(--bg);
+    color: var(--fg);
+    padding: 32px 24px 80px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  header { margin-bottom: 32px; }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+
+  .meta {
+    font-size: 14px;
+    color: var(--fg-dim);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .meta a { color: var(--fg-link); text-decoration: none; }
+  .meta a:hover { text-decoration: underline; }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .controls button {
+    appearance: none;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--fg-dim);
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 13px;
+    line-height: 1;
+    padding: 6px 10px;
+    transition: all 0.15s;
+  }
+
+  .controls button:hover {
+    background: var(--hover);
+    color: var(--fg);
+    border-color: var(--fg-dim);
+  }
+
+  .controls button.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  article a { color: var(--fg-link); text-decoration: none; }
+  article a:hover { text-decoration: underline; color: var(--fg-link-hover); }
+
+  article.links-hidden a {
+    color: inherit;
+    text-decoration: none;
+    pointer-events: none;
+    cursor: default;
+  }
+
+  .intro { margin-bottom: 32px; }
+  .intro p { margin-bottom: 12px; }
+
+  .section {
+    margin-bottom: 8px;
+    border-left: 2px solid var(--line);
+    padding-left: 16px;
+  }
+
+  .section-heading {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 0;
+    transition: color 0.15s;
+  }
+
+  .section-heading:hover { color: var(--accent); }
+
+  .section-heading .indicator {
+    font-size: 12px;
+    color: var(--fg-dim);
+    flex-shrink: 0;
+    width: 14px;
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+
+  .section-heading.collapsed .indicator { transform: rotate(0deg); }
+  .section-heading.expanded .indicator { transform: rotate(90deg); }
+
+  h2 { font-size: 22px; font-weight: 600; }
+  h3 { font-size: 18px; font-weight: 500; }
+  h4 { font-size: 16px; font-weight: 500; color: var(--fg-dim); }
+
+  .section-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
+  }
+
+  .section-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+  }
+
+  .section-content p {
+    margin-bottom: 14px;
+  }
+
+  .section .section {
+    margin-top: 4px;
+    border-left-color: var(--line);
+  }
+
+  .ref-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .ref-list li {
+    margin-bottom: 16px;
+    padding-left: 0;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .ref-list li strong { font-weight: 500; }
+
+  .tldr {
+    font-style: italic;
+    color: var(--fg-dim);
+    margin-bottom: 20px;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .tldr p { margin-bottom: 4px; }
+
+  .def-term { font-weight: 500; }
+
+  img.context-diagram {
+    max-width: 100%;
+    margin: 16px 0;
+    border-radius: 4px;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 16px 60px; font-size: 16px; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Notes on working with coding agents</h1>
+  <div class="meta">
+    Author: <a href="mailto:sundeep.yedida@stitchfix.com">Sundeep Yedida</a><br>
+    Date: Jun 1, 2026<br>
+    Status: Draft
+  </div>
+  <div class="controls">
+    <button id="toggle-links" type="button">Hide links</button>
+    <button id="toggle-all" type="button">Collapse all</button>
+  </div>
+</header>
+
+<article id="article">
+
+<div class="intro">
+  <p>Over the past year, coding agents have changed how I work. My throughput is higher and <a href="https://xkcd.com/285/">the quality is better</a>. These are some general notes on what seems to help, not specific to a particular coding agent.</p>
+</div>
+
+<!-- BEFORE THE NOTES -->
+<div class="section" data-depth="2">
+  <div class="section-heading expanded" onclick="toggleSection(this)">
+    <span class="indicator">▸</span>
+    <h2>Before the notes</h2>
+  </div>
+  <div class="section-content">
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Good software still comes first</h3>
+      </div>
+      <div class="section-content">
+        <p>Code still needs to be easy to read and maintain. <a href="https://www.laws-of-software.com/laws/kernighan/">Kernighan's Law</a> holds even more true when an agent writes the code and a human has to (<a href="https://simonwillison.net/2025/Feb/3/a-computer-can-never-be-held-accountable/">inevitably</a>) debug it.</p>
+      </div>
+    </div>
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Agents are means, not ends</h3>
+      </div>
+      <div class="section-content">
+        <p>The goal is still to deliver value and ship the thing. <a href="#">AI tools are force multipliers</a>. They can also get <a href="https://simonwillison.net/2026/Jun/3/uber-caps-usage/">very expensive</a> very <a href="https://digg.com/tech/2pxk2bay">quick</a>, and it's in our best <a href="https://www.newyorker.com/cartoon/a16995">interest</a> to be as efficient as possible with these tools.</p>
+      </div>
+    </div>
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>These tools have a lot of moving parts</h3>
+      </div>
+      <div class="section-content">
+        <p>Coding agents come with features like compaction, rewinding, subagents, plan modes, and durable context files. It is not obvious when to use which. "<a href="https://addyosmani.com/blog/loop-engineering/">Loops</a>" are a thing now &hellip; and Fable <a href="https://en.wikipedia.org/wiki/Comet_Hale%E2%80%93Bopp">came and went</a>, and might never be back again.</p>
+      </div>
+    </div>
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>The economics are not yet clear</h3>
+      </div>
+      <div class="section-content">
+        <p>We don't yet have a clear formula on how to calculate RoI. But all things being equal, fewer tokens are better than more.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DEFINITIONS -->
+<div class="section" data-depth="2">
+  <div class="section-heading expanded" onclick="toggleSection(this)">
+    <span class="indicator">▸</span>
+    <h2>A few definitions</h2>
+  </div>
+  <div class="section-content">
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Coding agent</h3>
+      </div>
+      <div class="section-content">
+        <p>A program that uses a language model to write, edit, and run code on your behalf. Claude Code, Cursor, and Codex are examples.</p>
+      </div>
+    </div>
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Session</h3>
+      </div>
+      <div class="section-content">
+        <p>A single conversation with the agent. Everything said and done in a session is visible to the agent until the session ends or the context window fills up. Sessions can be branched, rewound, compacted, and cleared.</p>
+      </div>
+    </div>
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Context (and context window)</h3>
+      </div>
+      <div class="section-content">
+        <p>Everything the agent can see when it generates its next response, including the conversation, files read, and tool outputs. It has a fixed size, depending on the coding agent and/or model. <em>Almost everything here is in service of optimizing this context window</em>.</p>
+      </div>
+    </div>
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Tools</h3>
+      </div>
+      <div class="section-content">
+        <p>Things the agent can do besides generating text, e.g., reading files, running commands, or searching the web. These are mainly what make an LLM "agentic" &hellip; being able to <em>do</em> things in service of a goal.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 1: SHAPING THE WORK -->
+<div class="section" data-depth="2">
+  <div class="section-heading expanded" onclick="toggleSection(this)">
+    <span class="indicator">▸</span>
+    <h2>1. Shaping the work</h2>
+  </div>
+  <div class="section-content">
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Plan before code</h3>
+      </div>
+      <div class="section-content">
+        <p>Every major coding agent has a "plan mode" built in. When competing tools all build the same feature without coordinating, it tells you something about what the work needs. Separating research from writing code keeps the agent from solving the wrong problem at full speed.</p>
+        <p>The pattern is to research the codebase first, build a plan, get alignment on the plan, and then write the code.</p>
+
+        <div class="section" data-depth="4">
+          <div class="section-heading expanded" onclick="toggleSection(this)">
+            <span class="indicator">▸</span>
+            <h4>Flip the interview</h4>
+          </div>
+          <div class="section-content">
+            <p>A useful variation is to flip the interview. Instead of writing a detailed spec up front, hand the agent a rough idea and have it ask questions. It will surface edge cases and constraints that had not come up yet. The result is a sharper spec than most devs would write on their own. That spec can then be run in a fresh session with clean context.</p>
+          </div>
+        </div>
+
+        <div class="section" data-depth="4">
+          <div class="section-heading expanded" onclick="toggleSection(this)">
+            <span class="indicator">▸</span>
+            <h4>When to skip the plan</h4>
+          </div>
+          <div class="section-content">
+            <p>Not every task needs a plan. If a change can be described in one sentence, e.g., fix a typo or rename a variable, planning adds overhead with no benefit. Planning is worth it when the scope is not clear, when the change touches many files, or when the codebase is unfamiliar.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Model-task fit</h3>
+      </div>
+      <div class="section-content">
+        <p>Different models have different cost and capability profiles. The right choice depends on the task, not the project. A complex architectural refactor and a mechanical find-and-replace across fifty files need very different levels of intelligence. Using the most powerful model for both means paying extra for work that does not need it.</p>
+
+        <div class="section" data-depth="4">
+          <div class="section-heading expanded" onclick="toggleSection(this)">
+            <span class="indicator">▸</span>
+            <h4>Decompose first</h4>
+          </div>
+          <div class="section-content">
+            <p>This principle has a prerequisite that is easy to skip past. The work needs to be broken into tasks first. Choosing a model is a per-task decision, not a per-project one. A dev who thinks "I am working on the auth migration" is working at the wrong level to make this choice. A dev who breaks that into "explore the current session handling," "plan the OAuth flow," "write the token refresh," and "write integration tests" can match each piece to the right model.</p>
+            <p>The cost and capability picture is changing fast. As pricing moves to usage-based models and as open-weights models close the gap on certain tasks, getting this choice right pays off more.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 2: MANAGING THE SESSION -->
+<div class="section" data-depth="2">
+  <div class="section-heading expanded" onclick="toggleSection(this)">
+    <span class="indicator">▸</span>
+    <h2>2. Managing the session</h2>
+  </div>
+  <div class="section-content">
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Context economy</h3>
+      </div>
+      <div class="section-content">
+        <p>The context window is everything the model can see when it generates its next response. It includes the system prompt, the conversation so far, every tool call and its output, and every file that has been read. It is a fixed-size resource. The model's performance gets worse as it fills up, an effect sometimes called context rot. As the window fills, the model's attention spreads across more tokens, and older content starts to pull attention away from the current task.</p>
+
+        <div class="section" data-depth="4">
+          <div class="section-heading expanded" onclick="toggleSection(this)">
+            <span class="indicator">▸</span>
+            <h4>The options at every turn</h4>
+          </div>
+          <div class="section-content">
+            <p>Every turn in a session is a decision point. The obvious move is to keep going and send another message in the same thread. But other options exist for good reasons. You can rewind to a previous point and re-prompt with new information. You can clear the session and start fresh. You can compact the history into a summary. Or you can spin off a subagent with its own clean context that only sends back its conclusions.</p>
+          </div>
+        </div>
+
+        <div class="section" data-depth="4">
+          <div class="section-heading expanded" onclick="toggleSection(this)">
+            <span class="indicator">▸</span>
+            <h4>When to use subagents</h4>
+          </div>
+          <div class="section-content">
+            <p>The test for when to use a subagent is simple. Will the intermediate output be needed again, or just the conclusion? Investigation, code review, and documentation are tasks where only the final result is needed. A subagent handles those in a separate context window and keeps the parent session clean.</p>
+            <p>What the agent sees determines how well it performs. A small, relevant context window produces better results than a large, cluttered one.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Restart over wrestle</h3>
+      </div>
+      <div class="section-content">
+        <p>This one goes against instinct. After spending twenty minutes in a session, correcting the agent twice, watching it go sideways, the natural move is to keep correcting. Every tool vendor's documentation says the opposite. A clean session with a better prompt almost always produces better results than a long session full of failed attempts. If the agent has been corrected twice on the same issue, the context is full of wrong approaches. The agent's earlier mistakes are in the context and affect its next response.</p>
+        <p>The practical move is to write down what was learned. Which approach failed and why. Which files are relevant. What constraints came up. Then start a fresh session with that knowledge in the opening prompt. Starting over is cheap. Continuing in a broken session is expensive in both time and output quality.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 3: CLOSING THE LOOP -->
+<div class="section" data-depth="2">
+  <div class="section-heading expanded" onclick="toggleSection(this)">
+    <span class="indicator">▸</span>
+    <h2>3. Closing the loop</h2>
+  </div>
+  <div class="section-content">
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Give the agent a way to verify its work</h3>
+      </div>
+      <div class="section-content">
+        <p>Without a check the agent can run on its own, "looks done" is its only signal. The dev becomes the verification loop, and every mistake waits for a human to notice it. Give the agent something that returns a pass or fail, e.g., a test suite, a build exit code, or a linter. The agent does the work, runs the check, reads the result, and keeps going until the check passes.</p>
+        <p>This is what makes it safe to give the agent more freedom. Giving the agent full freedom without a verifier produces confidently wrong output. Giving the agent full freedom with a verifier produces an agent that corrects itself. Writing good tests and keeping a fast, reliable build has always paid off. With agents, the return on that investment roughly doubles because both humans and agents use the signal.</p>
+        <p>Each tool has its own way of setting up verification. Claude Code has "/goal" conditions and stop hooks. Cursor has its hook system. Codex has test-first loops. The principle is the same across all of them.</p>
+      </div>
+    </div>
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Use deterministic guardrails, not instructions</h3>
+      </div>
+      <div class="section-content">
+        <p>Instructions in a prompt are suggestions. The agent will usually follow them and sometimes will not. The failure mode is silent. Nobody gets an error when a style rule is ignored. Linters, type checkers, hooks, and permission scopes are deterministic. They run every time, and they fail loudly.</p>
+        <p>The general idea is to put constraints in tools rather than in words. Strict linting and formatting rules force consistency regardless of which model or tool wrote the code. A hook that runs eslint after every file edit catches what a CLAUDE.md instruction to "follow our style guide" might miss.</p>
+        <p>This is not an argument against instructions in prompts. They are useful for guidance that is hard to put into a tool. It is an argument for preferring the tool when one exists. Constraints that you build into tools work across the team and survive across sessions. They do not get worse as the context window fills up.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 4: CROSS-SESSION INVESTMENT -->
+<div class="section" data-depth="2">
+  <div class="section-heading expanded" onclick="toggleSection(this)">
+    <span class="indicator">▸</span>
+    <h2>4. The cross-session investment</h2>
+  </div>
+  <div class="section-content">
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>Durable context</h3>
+      </div>
+      <div class="section-content">
+        <p>Every major agent tool has landed on the same pattern. There is a markdown file that the agent reads at the start of every session. It contains persistent instructions about the project. Claude Code calls it CLAUDE.md. Cursor uses .cursor/rules/. Codex has AGENTS.md. The name is different. The function is the same.</p>
+        <p>This file becomes more useful over time as the team adds to it. A well-maintained project file means every new session starts with the right constraints, the right commands, and pointers to the patterns the team uses. The agent cannot figure this out from the code alone.</p>
+
+        <div class="section" data-depth="4">
+          <div class="section-heading expanded" onclick="toggleSection(this)">
+            <span class="indicator">▸</span>
+            <h4>Keeping it useful</h4>
+          </div>
+          <div class="section-content">
+            <p>The advice on how to maintain this file is the same across every tool's documentation. Keep it short. For each line, ask whether removing it would cause the agent to make mistakes. If not, cut it. Treat it like code that gets reviewed and pruned. Check it into version control so the team benefits. A short file with clear instructions works better than a long one. A long file causes the agent to ignore the instructions in it.</p>
+            <p>There is a larger topic here about company-level knowledge bases and shared context. That is a discussion for a future post.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 5: THE ALLOCATION DECISION -->
+<div class="section" data-depth="2">
+  <div class="section-heading expanded" onclick="toggleSection(this)">
+    <span class="indicator">▸</span>
+    <h2>5. The allocation decision</h2>
+  </div>
+  <div class="section-content">
+
+    <div class="section" data-depth="3">
+      <div class="section-heading expanded" onclick="toggleSection(this)">
+        <span class="indicator">▸</span>
+        <h3>The autonomy spectrum</h3>
+      </div>
+      <div class="section-content">
+        <p>Every interaction with a coding agent sits somewhere on a range. At one end: "implement this method with the following signature." At the other: "here is the goal, here are the acceptance criteria, go."</p>
+        <p>Tight control keeps the dev involved in every decision. This limits throughput and removes most of the agent's value. Full autonomy maximizes throughput but requires confidence in the verifier, the durable context, and the guardrails. It requires confidence that all the other principles above are working.</p>
+        <p>Where to sit on this range depends on the task. How clear is the scope? How good is the test coverage? How reversible is a mistake? How expensive is it to stay closely involved? A mechanical refactor with strong test coverage can run at high autonomy. A security-sensitive change in unfamiliar code should be closely supervised.</p>
+        <p>Choosing where to sit on this range, and adjusting it as confidence changes during the task, is a skill that develops with practice.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- WHAT IS NEXT -->
+<div class="section" data-depth="2">
+  <div class="section-heading expanded" onclick="toggleSection(this)">
+    <span class="indicator">▸</span>
+    <h2>What is next</h2>
+  </div>
+  <div class="section-content">
+    <p>A follow-up post will cover how to apply these principles in specific workflows. Beyond that, there are topics that deserve their own discussion, e.g., what "good software" means when generating code costs almost nothing, company knowledge bases as shared context, and the ethics of LLM-assisted development.</p>
+    <p>These are positions, not settled facts. Where the reasoning is wrong, or where different experience has led to different conclusions, that is worth hearing.</p>
+  </div>
+</div>
+
+<!-- REFERENCES -->
+<div class="section" data-depth="2">
+  <div class="section-heading expanded" onclick="toggleSection(this)">
+    <span class="indicator">▸</span>
+    <h2>References</h2>
+  </div>
+  <div class="section-content">
+    <p>Each of these sources contributed to the thinking above. In a sense, this post is a distillation of many sources into a compressed, opinionated form. Which, come to think of it, is also how the models work.</p>
+    <ul class="ref-list">
+      <li><strong>Thariq Shihipar</strong>, "Using Claude Code: Session Management &amp; 1M Context" &mdash; the clearest treatment of context windows as a resource to manage, including compaction, rewind, and subagent patterns.</li>
+      <li><strong>Anthropic Engineering</strong>, "Effective Context Engineering for AI Agents" &mdash; strategies for managing context in long-running agent tasks. <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">anthropic.com</a></li>
+      <li><strong>Anthropic Engineering</strong>, "Claude Code: Best Practices for Agentic Coding" &mdash; tool-specific but the patterns apply more broadly. Strong on CLAUDE.md discipline and verification loops. <a href="https://www.anthropic.com/engineering/claude-code-best-practices">anthropic.com</a></li>
+      <li><strong>Lee Robinson / Cursor</strong>, "Best Practices for Coding with Agents" &mdash; plan mode, context management, the writer/reviewer pattern, and a study on experienced developers planning before generating. <a href="https://cursor.com/blog/agent-best-practices">cursor.com</a></li>
+      <li><strong>OpenAI</strong>, "How OpenAI Uses Codex" &mdash; internal usage patterns across security, product, infrastructure, and performance engineering teams. <a href="https://openai.com/business/guides-and-resources/how-openai-uses-codex/">openai.com</a></li>
+      <li><strong>OpenAI Developers</strong>, "Best Practices" (Codex docs) &mdash; AGENTS.md as durable context, plan mode, test-driven verification loops, and the advice to start over rather than wrestle a broken session. <a href="https://developers.openai.com/codex/learn/best-practices">developers.openai.com</a></li>
+    </ul>
+  </div>
+</div>
+
+</article>
+
+<script>
+function toggleSection(heading) {
+  const content = heading.nextElementSibling;
+  const isExpanded = heading.classList.contains('expanded');
+
+  if (isExpanded) {
+    content.style.maxHeight = content.scrollHeight + 'px';
+    requestAnimationFrame(() => {
+      content.style.maxHeight = '0';
+      content.style.opacity = '0';
+    });
+    heading.classList.remove('expanded');
+    heading.classList.add('collapsed');
+  } else {
+    content.style.maxHeight = content.scrollHeight + 'px';
+    content.style.opacity = '1';
+    heading.classList.remove('collapsed');
+    heading.classList.add('expanded');
+    setTimeout(() => {
+      content.style.maxHeight = 'none';
+    }, 300);
+  }
+}
+
+// Initialize all sections as expanded with no max-height constraint
+document.querySelectorAll('.section-content').forEach(el => {
+  el.style.maxHeight = 'none';
+  el.style.opacity = '1';
+});
+
+// Toggle all
+const toggleAllBtn = document.getElementById('toggle-all');
+let allExpanded = true;
+
+toggleAllBtn.addEventListener('click', () => {
+  allExpanded = !allExpanded;
+  document.querySelectorAll('.section-heading').forEach(heading => {
+    const content = heading.nextElementSibling;
+    if (allExpanded) {
+      content.style.maxHeight = 'none';
+      content.style.opacity = '1';
+      heading.classList.remove('collapsed');
+      heading.classList.add('expanded');
+    } else {
+      content.style.maxHeight = '0';
+      content.style.opacity = '0';
+      heading.classList.remove('expanded');
+      heading.classList.add('collapsed');
+    }
+  });
+  toggleAllBtn.textContent = allExpanded ? 'Collapse all' : 'Expand all';
+});
+
+// Link toggle
+const toggleLinksBtn = document.getElementById('toggle-links');
+let linksVisible = true;
+
+toggleLinksBtn.addEventListener('click', () => {
+  linksVisible = !linksVisible;
+  const article = document.getElementById('article');
+  article.classList.toggle('links-hidden', !linksVisible);
+  toggleLinksBtn.textContent = linksVisible ? 'Hide links' : 'Show links';
+  toggleLinksBtn.classList.toggle('active', !linksVisible);
+});
+</script>
+
+</body>
+</html>
