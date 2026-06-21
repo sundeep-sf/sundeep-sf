@@ -14,9 +14,8 @@
     --hover: #f0f0f0;
     --line: #e0e0e0;
     --accent: #2a6f97;
-    --section-bg: transparent;
     --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    --indicator-space: 22px;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -29,7 +28,6 @@
       --hover: #252525;
       --line: #333;
       --accent: #6ab0d6;
-      --section-bg: transparent;
     }
   }
 
@@ -48,6 +46,13 @@
 
   header { margin-bottom: 32px; }
 
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
   h1 {
     font-size: 28px;
     font-weight: 600;
@@ -64,6 +69,65 @@
 
   .meta a { color: var(--fg-link); text-decoration: none; }
   .meta a:hover { text-decoration: underline; }
+
+  /* Toggle switch */
+  .toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .toggle-label {
+    font-size: 13px;
+    color: var(--fg-dim);
+    user-select: none;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .toggle-switch {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--line);
+    border-radius: 20px;
+    transition: background 0.2s;
+  }
+
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+
+  .toggle-switch input:checked + .toggle-slider {
+    background: var(--accent);
+  }
+
+  .toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(16px);
+  }
 
   .controls {
     display: flex;
@@ -90,12 +154,6 @@
     background: var(--hover);
     color: var(--fg);
     border-color: var(--fg-dim);
-  }
-
-  .controls button.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
   }
 
   article a { color: var(--fg-link); text-decoration: none; }
@@ -148,6 +206,7 @@
   .section-content {
     overflow: hidden;
     transition: max-height 0.3s ease, opacity 0.2s ease;
+    padding-left: var(--indicator-space);
   }
 
   .section-content.collapsed {
@@ -186,35 +245,34 @@
     line-height: 1.6;
   }
 
-  .tldr p { margin-bottom: 4px; }
-
-  .def-term { font-weight: 500; }
-
-  img.context-diagram {
-    max-width: 100%;
-    margin: 16px 0;
-    border-radius: 4px;
-  }
-
   @media (max-width: 600px) {
     body { padding: 20px 16px 60px; font-size: 16px; }
     h1 { font-size: 24px; }
     h2 { font-size: 20px; }
     h3 { font-size: 17px; }
+    .header-top { flex-direction: column; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Notes on working with coding agents</h1>
+  <div class="header-top">
+    <h1>Notes on working with coding agents</h1>
+    <div class="toggle-container">
+      <span class="toggle-label" onclick="document.getElementById('link-toggle').click()">Links</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="link-toggle" checked onchange="toggleLinks(this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>
   <div class="meta">
     Author: <a href="mailto:sundeep.yedida@stitchfix.com">Sundeep Yedida</a><br>
     Date: Jun 1, 2026<br>
     Status: Draft
   </div>
   <div class="controls">
-    <button id="toggle-links" type="button">Hide links</button>
     <button id="toggle-all" type="button">Collapse all</button>
   </div>
 </header>
@@ -228,14 +286,14 @@
 <!-- BEFORE THE NOTES -->
 <div class="section" data-depth="2">
   <div class="section-heading expanded" onclick="toggleSection(this)">
-    <span class="indicator">▸</span>
+    <span class="indicator">&#9656;</span>
     <h2>Before the notes</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Good software still comes first</h3>
       </div>
       <div class="section-content">
@@ -245,7 +303,7 @@
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Agents are means, not ends</h3>
       </div>
       <div class="section-content">
@@ -255,7 +313,7 @@
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>These tools have a lot of moving parts</h3>
       </div>
       <div class="section-content">
@@ -265,7 +323,7 @@
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>The economics are not yet clear</h3>
       </div>
       <div class="section-content">
@@ -279,14 +337,14 @@
 <!-- DEFINITIONS -->
 <div class="section" data-depth="2">
   <div class="section-heading expanded" onclick="toggleSection(this)">
-    <span class="indicator">▸</span>
+    <span class="indicator">&#9656;</span>
     <h2>A few definitions</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Coding agent</h3>
       </div>
       <div class="section-content">
@@ -296,7 +354,7 @@
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Session</h3>
       </div>
       <div class="section-content">
@@ -306,7 +364,7 @@
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Context (and context window)</h3>
       </div>
       <div class="section-content">
@@ -316,7 +374,7 @@
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Tools</h3>
       </div>
       <div class="section-content">
@@ -330,14 +388,14 @@
 <!-- SECTION 1: SHAPING THE WORK -->
 <div class="section" data-depth="2">
   <div class="section-heading expanded" onclick="toggleSection(this)">
-    <span class="indicator">▸</span>
+    <span class="indicator">&#9656;</span>
     <h2>1. Shaping the work</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Plan before code</h3>
       </div>
       <div class="section-content">
@@ -346,7 +404,7 @@
 
         <div class="section" data-depth="4">
           <div class="section-heading expanded" onclick="toggleSection(this)">
-            <span class="indicator">▸</span>
+            <span class="indicator">&#9656;</span>
             <h4>Flip the interview</h4>
           </div>
           <div class="section-content">
@@ -356,7 +414,7 @@
 
         <div class="section" data-depth="4">
           <div class="section-heading expanded" onclick="toggleSection(this)">
-            <span class="indicator">▸</span>
+            <span class="indicator">&#9656;</span>
             <h4>When to skip the plan</h4>
           </div>
           <div class="section-content">
@@ -368,7 +426,7 @@
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Model-task fit</h3>
       </div>
       <div class="section-content">
@@ -376,7 +434,7 @@
 
         <div class="section" data-depth="4">
           <div class="section-heading expanded" onclick="toggleSection(this)">
-            <span class="indicator">▸</span>
+            <span class="indicator">&#9656;</span>
             <h4>Decompose first</h4>
           </div>
           <div class="section-content">
@@ -393,14 +451,14 @@
 <!-- SECTION 2: MANAGING THE SESSION -->
 <div class="section" data-depth="2">
   <div class="section-heading expanded" onclick="toggleSection(this)">
-    <span class="indicator">▸</span>
+    <span class="indicator">&#9656;</span>
     <h2>2. Managing the session</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Context economy</h3>
       </div>
       <div class="section-content">
@@ -408,7 +466,7 @@
 
         <div class="section" data-depth="4">
           <div class="section-heading expanded" onclick="toggleSection(this)">
-            <span class="indicator">▸</span>
+            <span class="indicator">&#9656;</span>
             <h4>The options at every turn</h4>
           </div>
           <div class="section-content">
@@ -418,7 +476,7 @@
 
         <div class="section" data-depth="4">
           <div class="section-heading expanded" onclick="toggleSection(this)">
-            <span class="indicator">▸</span>
+            <span class="indicator">&#9656;</span>
             <h4>When to use subagents</h4>
           </div>
           <div class="section-content">
@@ -431,7 +489,7 @@
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Restart over wrestle</h3>
       </div>
       <div class="section-content">
@@ -446,14 +504,14 @@
 <!-- SECTION 3: CLOSING THE LOOP -->
 <div class="section" data-depth="2">
   <div class="section-heading expanded" onclick="toggleSection(this)">
-    <span class="indicator">▸</span>
+    <span class="indicator">&#9656;</span>
     <h2>3. Closing the loop</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Give the agent a way to verify its work</h3>
       </div>
       <div class="section-content">
@@ -465,7 +523,7 @@
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Use deterministic guardrails, not instructions</h3>
       </div>
       <div class="section-content">
@@ -481,14 +539,14 @@
 <!-- SECTION 4: CROSS-SESSION INVESTMENT -->
 <div class="section" data-depth="2">
   <div class="section-heading expanded" onclick="toggleSection(this)">
-    <span class="indicator">▸</span>
+    <span class="indicator">&#9656;</span>
     <h2>4. The cross-session investment</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>Durable context</h3>
       </div>
       <div class="section-content">
@@ -497,7 +555,7 @@
 
         <div class="section" data-depth="4">
           <div class="section-heading expanded" onclick="toggleSection(this)">
-            <span class="indicator">▸</span>
+            <span class="indicator">&#9656;</span>
             <h4>Keeping it useful</h4>
           </div>
           <div class="section-content">
@@ -514,14 +572,14 @@
 <!-- SECTION 5: THE ALLOCATION DECISION -->
 <div class="section" data-depth="2">
   <div class="section-heading expanded" onclick="toggleSection(this)">
-    <span class="indicator">▸</span>
+    <span class="indicator">&#9656;</span>
     <h2>5. The allocation decision</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
       <div class="section-heading expanded" onclick="toggleSection(this)">
-        <span class="indicator">▸</span>
+        <span class="indicator">&#9656;</span>
         <h3>The autonomy spectrum</h3>
       </div>
       <div class="section-content">
@@ -538,7 +596,7 @@
 <!-- WHAT IS NEXT -->
 <div class="section" data-depth="2">
   <div class="section-heading expanded" onclick="toggleSection(this)">
-    <span class="indicator">▸</span>
+    <span class="indicator">&#9656;</span>
     <h2>What is next</h2>
   </div>
   <div class="section-content">
@@ -550,7 +608,7 @@
 <!-- REFERENCES -->
 <div class="section" data-depth="2">
   <div class="section-heading expanded" onclick="toggleSection(this)">
-    <span class="indicator">▸</span>
+    <span class="indicator">&#9656;</span>
     <h2>References</h2>
   </div>
   <div class="section-content">
@@ -558,10 +616,10 @@
     <ul class="ref-list">
       <li><strong>Thariq Shihipar</strong>, "Using Claude Code: Session Management &amp; 1M Context" &mdash; the clearest treatment of context windows as a resource to manage, including compaction, rewind, and subagent patterns.</li>
       <li><strong>Anthropic Engineering</strong>, "Effective Context Engineering for AI Agents" &mdash; strategies for managing context in long-running agent tasks. <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">anthropic.com</a></li>
-      <li><strong>Anthropic Engineering</strong>, "Claude Code: Best Practices for Agentic Coding" &mdash; tool-specific but the patterns apply more broadly. Strong on CLAUDE.md discipline and verification loops. <a href="https://www.anthropic.com/engineering/claude-code-best-practices">anthropic.com</a></li>
-      <li><strong>Lee Robinson / Cursor</strong>, "Best Practices for Coding with Agents" &mdash; plan mode, context management, the writer/reviewer pattern, and a study on experienced developers planning before generating. <a href="https://cursor.com/blog/agent-best-practices">cursor.com</a></li>
+      <li><strong>Anthropic Engineering</strong>, "Claude Code: Best Practices for Agentic Coding" &mdash; tool-specific but the patterns apply more broadly. <a href="https://www.anthropic.com/engineering/claude-code-best-practices">anthropic.com</a></li>
+      <li><strong>Lee Robinson / Cursor</strong>, "Best Practices for Coding with Agents" &mdash; plan mode, context management, the writer/reviewer pattern. <a href="https://cursor.com/blog/agent-best-practices">cursor.com</a></li>
       <li><strong>OpenAI</strong>, "How OpenAI Uses Codex" &mdash; internal usage patterns across security, product, infrastructure, and performance engineering teams. <a href="https://openai.com/business/guides-and-resources/how-openai-uses-codex/">openai.com</a></li>
-      <li><strong>OpenAI Developers</strong>, "Best Practices" (Codex docs) &mdash; AGENTS.md as durable context, plan mode, test-driven verification loops, and the advice to start over rather than wrestle a broken session. <a href="https://developers.openai.com/codex/learn/best-practices">developers.openai.com</a></li>
+      <li><strong>OpenAI Developers</strong>, "Best Practices" (Codex docs) &mdash; AGENTS.md as durable context, plan mode, test-driven verification loops. <a href="https://developers.openai.com/codex/learn/best-practices">developers.openai.com</a></li>
     </ul>
   </div>
 </div>
@@ -586,19 +644,15 @@ function toggleSection(heading) {
     content.style.opacity = '1';
     heading.classList.remove('collapsed');
     heading.classList.add('expanded');
-    setTimeout(() => {
-      content.style.maxHeight = 'none';
-    }, 300);
+    setTimeout(() => { content.style.maxHeight = 'none'; }, 300);
   }
 }
 
-// Initialize all sections as expanded with no max-height constraint
 document.querySelectorAll('.section-content').forEach(el => {
   el.style.maxHeight = 'none';
   el.style.opacity = '1';
 });
 
-// Toggle all
 const toggleAllBtn = document.getElementById('toggle-all');
 let allExpanded = true;
 
@@ -621,17 +675,9 @@ toggleAllBtn.addEventListener('click', () => {
   toggleAllBtn.textContent = allExpanded ? 'Collapse all' : 'Expand all';
 });
 
-// Link toggle
-const toggleLinksBtn = document.getElementById('toggle-links');
-let linksVisible = true;
-
-toggleLinksBtn.addEventListener('click', () => {
-  linksVisible = !linksVisible;
-  const article = document.getElementById('article');
-  article.classList.toggle('links-hidden', !linksVisible);
-  toggleLinksBtn.textContent = linksVisible ? 'Hide links' : 'Show links';
-  toggleLinksBtn.classList.toggle('active', !linksVisible);
-});
+function toggleLinks(show) {
+  document.getElementById('article').classList.toggle('links-hidden', !show);
+}
 </script>
 
 </body>
