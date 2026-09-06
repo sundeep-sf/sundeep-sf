@@ -1,0 +1,10 @@
+{
+  "name": "sundeep-notes",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/site.test.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

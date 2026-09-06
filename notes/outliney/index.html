@@ -4,131 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Outliney — Notes</title>
-<style>
-  :root {
-    --bg: #fafafa;
-    --fg: #1a1a1a;
-    --fg-dim: #666;
-    --fg-link: #2a6f97;
-    --fg-link-hover: #1a4f6f;
-    --hover: #f0f0f0;
-    --line: #e0e0e0;
-    --accent: #2a6f97;
-    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    --indicator-space: 22px;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1a1a1a;
-      --fg: #e0e0e0;
-      --fg-dim: #999;
-      --fg-link: #6ab0d6;
-      --fg-link-hover: #8cc8e8;
-      --hover: #252525;
-      --line: #333;
-      --accent: #6ab0d6;
-    }
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: var(--font);
-    font-size: 17px;
-    line-height: 1.7;
-    background: var(--bg);
-    color: var(--fg);
-    padding: 32px 24px 80px;
-    max-width: 720px;
-    margin: 0 auto;
-  }
-
-  h1 {
-    font-size: 28px;
-    font-weight: 600;
-    line-height: 1.3;
-    margin-bottom: 8px;
-  }
-
-  .meta {
-    font-size: 14px;
-    color: var(--fg-dim);
-    margin-bottom: 24px;
-  }
-
-  a { color: var(--fg-link); text-decoration: none; }
-  a:hover { text-decoration: underline; color: var(--fg-link-hover); }
-
-  .back-link {
-    font-size: 14px;
-    color: var(--fg-dim);
-    margin-bottom: 16px;
-    display: inline-block;
-  }
-
-  .intro { margin-bottom: 32px; }
-  .intro p { margin-bottom: 12px; }
-
-  .section {
-    margin-bottom: 8px;
-    border-left: 2px solid var(--line);
-    padding-left: 16px;
-  }
-
-  .section-heading {
-    cursor: pointer;
-    user-select: none;
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 6px 0;
-    transition: color 0.15s;
-  }
-
-  .section-heading:hover { color: var(--accent); }
-
-  .section-heading .indicator {
-    font-size: 12px;
-    color: var(--fg-dim);
-    flex-shrink: 0;
-    width: 14px;
-    display: inline-block;
-    transition: transform 0.2s;
-  }
-
-  .section-heading.collapsed .indicator { transform: rotate(0deg); }
-  .section-heading.expanded .indicator { transform: rotate(90deg); }
-
-  h2 { font-size: 20px; font-weight: 600; }
-
-  .section-content {
-    overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.2s ease;
-    padding-left: var(--indicator-space);
-  }
-
-  .section-content p { margin-bottom: 12px; }
-
-  @media (max-width: 600px) {
-    body { padding: 20px 16px 60px; font-size: 16px; }
-    h1 { font-size: 24px; }
-  }
-</style>
+<link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
 
-<a href="../" class="back-link">&larr; notes</a>
+<header class="site-header">
+  <nav class="site-nav" aria-label="Notes">
+    <a href="/notes/">Notes</a>
+  </nav>
+  <div class="header-top">
+    <h1>Outliney</h1>
+  </div>
+  <div class="meta">Jun 2026</div>
+  <div class="controls">
+    <button id="toggle-all" type="button">Collapse all</button>
+  </div>
+</header>
 
-<h1>Outliney</h1>
-<div class="meta">Jun 2026</div>
+<main>
 
 <div class="intro">
   <p>These notes are presented as collapsible outlines rather than flat documents. This page explains why.</p>
 </div>
 
 <div class="section">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>The problem with linear documents</h2>
   </div>
@@ -139,7 +39,7 @@
 </div>
 
 <div class="section">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>What an outline gives you</h2>
   </div>
@@ -150,7 +50,7 @@
 </div>
 
 <div class="section">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>Why this format for these notes</h2>
   </div>
@@ -161,7 +61,7 @@
 </div>
 
 <div class="section">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>How it works</h2>
   </div>
@@ -170,31 +70,9 @@
   </div>
 </div>
 
-<script>
-function toggleSection(heading) {
-  const content = heading.nextElementSibling;
-  const isExpanded = heading.classList.contains('expanded');
-  if (isExpanded) {
-    content.style.maxHeight = content.scrollHeight + 'px';
-    requestAnimationFrame(() => {
-      content.style.maxHeight = '0';
-      content.style.opacity = '0';
-    });
-    heading.classList.remove('expanded');
-    heading.classList.add('collapsed');
-  } else {
-    content.style.maxHeight = content.scrollHeight + 'px';
-    content.style.opacity = '1';
-    heading.classList.remove('collapsed');
-    heading.classList.add('expanded');
-    setTimeout(() => { content.style.maxHeight = 'none'; }, 300);
-  }
-}
-document.querySelectorAll('.section-content').forEach(el => {
-  el.style.maxHeight = 'none';
-  el.style.opacity = '1';
-});
-</script>
+</main>
+
+<script src="../assets/outline.js"></script>
 
 </body>
 </html>
