@@ -6,7 +6,12 @@ const { after, before, test } = require("node:test");
 const { chromium } = require("playwright");
 
 const root = path.resolve(__dirname, "..");
-const routes = ["/notes/", "/notes/outliney/", "/notes/coding-agents-101/"];
+const siteBasePath = "/sundeep-sf";
+const routes = [
+  `${siteBasePath}/notes/`,
+  `${siteBasePath}/notes/outliney/`,
+  `${siteBasePath}/notes/coding-agents-101/`,
+];
 
 let baseUrl;
 let browser;
@@ -15,7 +20,12 @@ let server;
 before(async () => {
   server = http.createServer((request, response) => {
     const pathname = new URL(request.url, "http://localhost").pathname;
-    const relativePath = pathname.endsWith("/") ? `${pathname}index.html` : pathname;
+    const repositoryPathname = pathname.startsWith(`${siteBasePath}/`)
+      ? pathname.slice(siteBasePath.length)
+      : pathname;
+    const relativePath = repositoryPathname.endsWith("/")
+      ? `${repositoryPathname}index.html`
+      : repositoryPathname;
     const filePath = path.resolve(root, `.${relativePath}`);
 
     if (!filePath.startsWith(`${root}${path.sep}`) || !fs.existsSync(filePath)) {
@@ -59,7 +69,8 @@ test("every notes page uses the shared shell and links to the notes home", async
     assert.equal(await page.locator("header.site-header").count(), 1, route);
 
     const notesLink = page.getByRole("navigation", { name: "Notes" }).getByRole("link", { name: "Notes" });
-    assert.equal(await notesLink.getAttribute("href"), "/notes/", route);
+    const notesHref = await notesLink.getAttribute("href");
+    assert.equal(new URL(notesHref, `${baseUrl}${route}`).pathname, `${siteBasePath}/notes/`, route);
 
     const appearance = await page.locator("body").evaluate((body) => {
       const bodyStyle = getComputedStyle(body);
@@ -80,9 +91,9 @@ test("every notes page uses the shared shell and links to the notes home", async
     assert.equal(appearance.titleSize, "28px", route);
   }
 
-  await page.goto(`${baseUrl}/notes/outliney/`);
+  await page.goto(`${baseUrl}${siteBasePath}/notes/outliney/`);
   await page.getByRole("navigation", { name: "Notes" }).getByRole("link", { name: "Notes" }).click();
-  assert.equal(new URL(page.url()).pathname, "/notes/");
+  assert.equal(new URL(page.url()).pathname, `${siteBasePath}/notes/`);
 
   await page.close();
 });
