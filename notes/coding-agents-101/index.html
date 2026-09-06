@@ -4,263 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Notes on working with coding agents</title>
-<style>
-  :root {
-    --bg: #fafafa;
-    --fg: #1a1a1a;
-    --fg-dim: #666;
-    --fg-link: #2a6f97;
-    --fg-link-hover: #1a4f6f;
-    --hover: #f0f0f0;
-    --line: #e0e0e0;
-    --accent: #2a6f97;
-    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    --indicator-space: 22px;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1a1a1a;
-      --fg: #e0e0e0;
-      --fg-dim: #999;
-      --fg-link: #6ab0d6;
-      --fg-link-hover: #8cc8e8;
-      --hover: #252525;
-      --line: #333;
-      --accent: #6ab0d6;
-    }
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: var(--font);
-    font-size: 17px;
-    line-height: 1.7;
-    background: var(--bg);
-    color: var(--fg);
-    padding: 32px 24px 80px;
-    max-width: 720px;
-    margin: 0 auto;
-  }
-
-  header { margin-bottom: 32px; }
-
-  .header-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  h1 {
-    font-size: 28px;
-    font-weight: 600;
-    line-height: 1.3;
-    margin-bottom: 8px;
-  }
-
-  .meta {
-    font-size: 14px;
-    color: var(--fg-dim);
-    margin-bottom: 16px;
-    line-height: 1.5;
-  }
-
-  .meta a { color: var(--fg-link); text-decoration: none; }
-  .meta a:hover { text-decoration: underline; }
-
-  /* Toggle switch */
-  .toggle-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-    margin-top: 4px;
-  }
-
-  .toggle-label {
-    font-size: 13px;
-    color: var(--fg-dim);
-    user-select: none;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .toggle-switch {
-    position: relative;
-    width: 36px;
-    height: 20px;
-    flex-shrink: 0;
-  }
-
-  .toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: var(--line);
-    border-radius: 20px;
-    transition: background 0.2s;
-  }
-
-  .toggle-slider::before {
-    content: '';
-    position: absolute;
-    height: 14px;
-    width: 14px;
-    left: 3px;
-    bottom: 3px;
-    background: white;
-    border-radius: 50%;
-    transition: transform 0.2s;
-  }
-
-  .toggle-switch input:checked + .toggle-slider {
-    background: var(--accent);
-  }
-
-  .toggle-switch input:checked + .toggle-slider::before {
-    transform: translateX(16px);
-  }
-
-  .controls {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-  }
-
-  .controls button {
-    appearance: none;
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    background: transparent;
-    color: var(--fg-dim);
-    cursor: pointer;
-    font-family: var(--font);
-    font-size: 13px;
-    line-height: 1;
-    padding: 6px 10px;
-    transition: all 0.15s;
-  }
-
-  .controls button:hover {
-    background: var(--hover);
-    color: var(--fg);
-    border-color: var(--fg-dim);
-  }
-
-  article a { color: var(--fg-link); text-decoration: none; }
-  article a:hover { text-decoration: underline; color: var(--fg-link-hover); }
-
-  article.links-hidden a {
-    color: inherit;
-    text-decoration: none;
-    pointer-events: none;
-    cursor: default;
-  }
-
-  .intro { margin-bottom: 32px; }
-  .intro p { margin-bottom: 12px; }
-
-  .section {
-    margin-bottom: 8px;
-    border-left: 2px solid var(--line);
-    padding-left: 16px;
-  }
-
-  .section-heading {
-    cursor: pointer;
-    user-select: none;
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 6px 0;
-    transition: color 0.15s;
-  }
-
-  .section-heading:hover { color: var(--accent); }
-
-  .section-heading .indicator {
-    font-size: 12px;
-    color: var(--fg-dim);
-    flex-shrink: 0;
-    width: 14px;
-    display: inline-block;
-    transition: transform 0.2s;
-  }
-
-  .section-heading.collapsed .indicator { transform: rotate(0deg); }
-  .section-heading.expanded .indicator { transform: rotate(90deg); }
-
-  h2 { font-size: 22px; font-weight: 600; }
-  h3 { font-size: 18px; font-weight: 500; }
-  h4 { font-size: 16px; font-weight: 500; color: var(--fg-dim); }
-
-  .section-content {
-    overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.2s ease;
-    padding-left: var(--indicator-space);
-  }
-
-  .section-content.collapsed {
-    max-height: 0;
-    opacity: 0;
-  }
-
-  .section-content p {
-    margin-bottom: 14px;
-  }
-
-  .section .section {
-    margin-top: 4px;
-    border-left-color: var(--line);
-  }
-
-  .ref-list {
-    list-style: none;
-    padding: 0;
-  }
-
-  .ref-list li {
-    margin-bottom: 16px;
-    padding-left: 0;
-    font-size: 15px;
-    line-height: 1.6;
-  }
-
-  .ref-list li strong { font-weight: 500; }
-
-  .tldr {
-    font-style: italic;
-    color: var(--fg-dim);
-    margin-bottom: 20px;
-    font-size: 15px;
-    line-height: 1.6;
-  }
-
-  @media (max-width: 600px) {
-    body { padding: 20px 16px 60px; font-size: 16px; }
-    h1 { font-size: 24px; }
-    h2 { font-size: 20px; }
-    h3 { font-size: 17px; }
-    .header-top { flex-direction: column; }
-  }
-</style>
+<link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
 
-<header>
+<header class="site-header">
+  <nav class="site-nav" aria-label="Notes">
+    <a href="/notes/">Notes</a>
+  </nav>
   <div class="header-top">
     <h1>Notes on working with coding agents</h1>
     <div class="toggle-container">
-      <span class="toggle-label" onclick="document.getElementById('link-toggle').click()">Links</span>
+      <label class="toggle-label" for="link-toggle">Links</label>
       <label class="toggle-switch">
         <input type="checkbox" id="link-toggle" checked onchange="toggleLinks(this.checked)">
         <span class="toggle-slider"></span>
@@ -277,7 +32,7 @@
   </div>
 </header>
 
-<article id="article">
+<main id="article">
 
 <div class="intro">
   <p>Over the past year, coding agents have changed how I work. My throughput is higher and <a href="https://xkcd.com/285/">the quality is better</a>. These are some general notes on what seems to help, not specific to a particular coding agent.</p>
@@ -285,14 +40,14 @@
 
 <!-- BEFORE THE NOTES -->
 <div class="section" data-depth="2">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>Before the notes</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Good software still comes first</h3>
       </div>
@@ -302,7 +57,7 @@
     </div>
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Agents are means, not ends</h3>
       </div>
@@ -312,7 +67,7 @@
     </div>
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>These tools have a lot of moving parts</h3>
       </div>
@@ -322,7 +77,7 @@
     </div>
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>The economics are not yet clear</h3>
       </div>
@@ -336,14 +91,14 @@
 
 <!-- DEFINITIONS -->
 <div class="section" data-depth="2">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>A few definitions</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Coding agent</h3>
       </div>
@@ -353,7 +108,7 @@
     </div>
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Session</h3>
       </div>
@@ -363,7 +118,7 @@
     </div>
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Context (and context window)</h3>
       </div>
@@ -373,7 +128,7 @@
     </div>
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Tools</h3>
       </div>
@@ -387,14 +142,14 @@
 
 <!-- SECTION 1: SHAPING THE WORK -->
 <div class="section" data-depth="2">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>1. Shaping the work</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Plan before code</h3>
       </div>
@@ -403,7 +158,7 @@
         <p>The pattern is to research the codebase first, build a plan, get alignment on the plan, and then write the code.</p>
 
         <div class="section" data-depth="4">
-          <div class="section-heading expanded" onclick="toggleSection(this)">
+          <div class="section-heading expanded" role="button" tabindex="0">
             <span class="indicator">&#9656;</span>
             <h4>Flip the interview</h4>
           </div>
@@ -413,7 +168,7 @@
         </div>
 
         <div class="section" data-depth="4">
-          <div class="section-heading expanded" onclick="toggleSection(this)">
+          <div class="section-heading expanded" role="button" tabindex="0">
             <span class="indicator">&#9656;</span>
             <h4>When to skip the plan</h4>
           </div>
@@ -425,7 +180,7 @@
     </div>
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Model-task fit</h3>
       </div>
@@ -433,7 +188,7 @@
         <p>Different models have different cost and capability profiles. The right choice depends on the task, not the project. A complex architectural refactor and a mechanical find-and-replace across fifty files need very different levels of intelligence. Using the most powerful model for both means paying extra for work that does not need it.</p>
 
         <div class="section" data-depth="4">
-          <div class="section-heading expanded" onclick="toggleSection(this)">
+          <div class="section-heading expanded" role="button" tabindex="0">
             <span class="indicator">&#9656;</span>
             <h4>Decompose first</h4>
           </div>
@@ -450,14 +205,14 @@
 
 <!-- SECTION 2: MANAGING THE SESSION -->
 <div class="section" data-depth="2">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>2. Managing the session</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Context economy</h3>
       </div>
@@ -465,7 +220,7 @@
         <p>The context window is everything the model can see when it generates its next response. It includes the system prompt, the conversation so far, every tool call and its output, and every file that has been read. It is a fixed-size resource. The model's performance gets worse as it fills up, an effect sometimes called context rot. As the window fills, the model's attention spreads across more tokens, and older content starts to pull attention away from the current task.</p>
 
         <div class="section" data-depth="4">
-          <div class="section-heading expanded" onclick="toggleSection(this)">
+          <div class="section-heading expanded" role="button" tabindex="0">
             <span class="indicator">&#9656;</span>
             <h4>The options at every turn</h4>
           </div>
@@ -475,7 +230,7 @@
         </div>
 
         <div class="section" data-depth="4">
-          <div class="section-heading expanded" onclick="toggleSection(this)">
+          <div class="section-heading expanded" role="button" tabindex="0">
             <span class="indicator">&#9656;</span>
             <h4>When to use subagents</h4>
           </div>
@@ -488,7 +243,7 @@
     </div>
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Restart over wrestle</h3>
       </div>
@@ -503,14 +258,14 @@
 
 <!-- SECTION 3: CLOSING THE LOOP -->
 <div class="section" data-depth="2">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>3. Closing the loop</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Give the agent a way to verify its work</h3>
       </div>
@@ -522,7 +277,7 @@
     </div>
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Use deterministic guardrails, not instructions</h3>
       </div>
@@ -538,14 +293,14 @@
 
 <!-- SECTION 4: CROSS-SESSION INVESTMENT -->
 <div class="section" data-depth="2">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>4. The cross-session investment</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>Durable context</h3>
       </div>
@@ -554,7 +309,7 @@
         <p>This file becomes more useful over time as the team adds to it. A well-maintained project file means every new session starts with the right constraints, the right commands, and pointers to the patterns the team uses. The agent cannot figure this out from the code alone.</p>
 
         <div class="section" data-depth="4">
-          <div class="section-heading expanded" onclick="toggleSection(this)">
+          <div class="section-heading expanded" role="button" tabindex="0">
             <span class="indicator">&#9656;</span>
             <h4>Keeping it useful</h4>
           </div>
@@ -571,14 +326,14 @@
 
 <!-- SECTION 5: THE ALLOCATION DECISION -->
 <div class="section" data-depth="2">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>5. The allocation decision</h2>
   </div>
   <div class="section-content">
 
     <div class="section" data-depth="3">
-      <div class="section-heading expanded" onclick="toggleSection(this)">
+      <div class="section-heading expanded" role="button" tabindex="0">
         <span class="indicator">&#9656;</span>
         <h3>The autonomy spectrum</h3>
       </div>
@@ -595,7 +350,7 @@
 
 <!-- WHAT IS NEXT -->
 <div class="section" data-depth="2">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>What is next</h2>
   </div>
@@ -607,7 +362,7 @@
 
 <!-- REFERENCES -->
 <div class="section" data-depth="2">
-  <div class="section-heading expanded" onclick="toggleSection(this)">
+  <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator">&#9656;</span>
     <h2>References</h2>
   </div>
@@ -624,61 +379,9 @@
   </div>
 </div>
 
-</article>
+</main>
 
-<script>
-function toggleSection(heading) {
-  const content = heading.nextElementSibling;
-  const isExpanded = heading.classList.contains('expanded');
-
-  if (isExpanded) {
-    content.style.maxHeight = content.scrollHeight + 'px';
-    requestAnimationFrame(() => {
-      content.style.maxHeight = '0';
-      content.style.opacity = '0';
-    });
-    heading.classList.remove('expanded');
-    heading.classList.add('collapsed');
-  } else {
-    content.style.maxHeight = content.scrollHeight + 'px';
-    content.style.opacity = '1';
-    heading.classList.remove('collapsed');
-    heading.classList.add('expanded');
-    setTimeout(() => { content.style.maxHeight = 'none'; }, 300);
-  }
-}
-
-document.querySelectorAll('.section-content').forEach(el => {
-  el.style.maxHeight = 'none';
-  el.style.opacity = '1';
-});
-
-const toggleAllBtn = document.getElementById('toggle-all');
-let allExpanded = true;
-
-toggleAllBtn.addEventListener('click', () => {
-  allExpanded = !allExpanded;
-  document.querySelectorAll('.section-heading').forEach(heading => {
-    const content = heading.nextElementSibling;
-    if (allExpanded) {
-      content.style.maxHeight = 'none';
-      content.style.opacity = '1';
-      heading.classList.remove('collapsed');
-      heading.classList.add('expanded');
-    } else {
-      content.style.maxHeight = '0';
-      content.style.opacity = '0';
-      heading.classList.remove('expanded');
-      heading.classList.add('collapsed');
-    }
-  });
-  toggleAllBtn.textContent = allExpanded ? 'Collapse all' : 'Expand all';
-});
-
-function toggleLinks(show) {
-  document.getElementById('article').classList.toggle('links-hidden', !show);
-}
-</script>
+<script src="../assets/outline.js"></script>
 
 </body>
 </html>
