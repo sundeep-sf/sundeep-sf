@@ -2,9 +2,15 @@
   "name": "sundeep-notes",
   "private": true,
   "scripts": {
-    "test": "node --test tests/site.test.cjs"
+    "build": "node scripts/publish-notes.cjs",
+    "build:check": "node scripts/publish-notes.cjs --check",
+    "test": "npm run build:check && node --test tests/publisher.test.cjs tests/site.test.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"
+  },
+  "dependencies": {
+    "gray-matter": "4.0.3",
+    "markdown-it": "15.0.1"
   }
 }
