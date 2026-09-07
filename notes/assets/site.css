@@ -30,6 +30,10 @@
   padding: 0;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   background: var(--bg);
   color: var(--fg);
@@ -67,6 +71,45 @@ body {
   justify-content: space-between;
 }
 
+.header-actions {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: 16px;
+}
+
+.view-switch {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  display: none;
+  overflow: hidden;
+}
+
+.js .view-switch {
+  display: flex;
+}
+
+.view-switch button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--fg-dim);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1;
+  padding: 7px 10px;
+}
+
+.view-switch button + button {
+  border-left: 1px solid var(--line);
+}
+
+.view-switch button[aria-pressed="true"] {
+  background: var(--accent);
+  color: white;
+}
+
 h1 {
   font-size: 28px;
   font-weight: 600;
@@ -95,10 +138,14 @@ main a:hover {
 
 .toggle-container {
   align-items: center;
-  display: flex;
+  display: none;
   flex-shrink: 0;
   gap: 8px;
   margin-top: 4px;
+}
+
+.js .toggle-container {
+  display: flex;
 }
 
 .toggle-label {
@@ -155,10 +202,14 @@ main a:hover {
 }
 
 .controls {
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 24px;
+}
+
+.js .controls {
+  display: flex;
 }
 
 .controls button {
@@ -194,6 +245,45 @@ main a:hover {
 
 .intro p {
   margin-bottom: 12px;
+}
+
+.view-panel[hidden] {
+  display: none;
+}
+
+.normal-view > p:first-child,
+.outline-view > p:first-child {
+  margin-bottom: 32px;
+}
+
+.normal-view h2,
+.note-group h2 {
+  margin: 32px 0 12px;
+}
+
+.normal-view h3 {
+  margin: 24px 0 10px;
+}
+
+.normal-view h4 {
+  margin: 20px 0 8px;
+}
+
+.normal-view p {
+  margin-bottom: 14px;
+}
+
+.normal-view ul,
+.normal-view ol {
+  margin: 0 0 18px 24px;
+}
+
+.normal-view li {
+  margin-bottom: 8px;
+}
+
+.note-group {
+  margin-bottom: 28px;
 }
 
 .section {
@@ -335,5 +425,10 @@ h4 {
 
   .header-top {
     flex-direction: column;
+  }
+
+  .header-actions {
+    align-items: flex-start;
+    flex-wrap: wrap;
   }
 }

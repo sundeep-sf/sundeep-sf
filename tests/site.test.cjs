@@ -98,6 +98,101 @@ test("every notes page uses the shared shell and links to the notes home", async
   await page.close();
 });
 
+test("a reader starts in Outline and can switch to Normal", async () => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  await page.goto(`${baseUrl}${siteBasePath}/notes/coding-agents-101/`);
+
+  assert.equal(await page.getByRole("button", { name: "Outline" }).getAttribute("aria-pressed"), "true");
+  assert.equal(await page.locator("[data-view-panel='outline']").isVisible(), true);
+  assert.equal(await page.locator("[data-view-panel='normal']").isVisible(), false);
+  assert.equal(await page.locator("[data-outline-controls]").isVisible(), true);
+
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.getByRole("button", { name: "Normal" }).click();
+
+  assert.equal(new URL(page.url()).searchParams.get("view"), "normal");
+  assert.equal(await page.evaluate(() => window.scrollY), 0);
+  assert.equal(await page.getByRole("button", { name: "Normal" }).getAttribute("aria-pressed"), "true");
+  assert.equal(await page.locator("[data-view-panel='normal']").isVisible(), true);
+  assert.equal(await page.locator("[data-view-panel='outline']").isVisible(), false);
+  assert.equal(await page.locator("[data-outline-controls]").isVisible(), false);
+  assert.equal(await page.locator("[data-view-panel='normal'] .section-heading").count(), 0);
+
+  await context.close();
+});
+
+test("view URLs and the saved preference control navigation", async () => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+
+  await page.goto(`${baseUrl}${siteBasePath}/notes/`);
+  assert.equal(new URL(page.url()).searchParams.get("view"), "outline");
+
+  await page.getByRole("button", { name: "Normal" }).click();
+  assert.equal(await page.evaluate(() => localStorage.getItem("notes-view")), "normal");
+
+  await page.goto(`${baseUrl}${siteBasePath}/notes/outliney/`);
+  assert.equal(new URL(page.url()).searchParams.get("view"), "normal");
+  assert.equal(await page.locator("[data-view-panel='normal']").isVisible(), true);
+
+  await page.goto(`${baseUrl}${siteBasePath}/notes/outliney/?view=outline`);
+  assert.equal(await page.locator("[data-view-panel='outline']").isVisible(), true);
+
+  await page.goto(`${baseUrl}${siteBasePath}/notes/?view=unknown`);
+  assert.equal(new URL(page.url()).searchParams.get("view"), "normal");
+
+  await page.goto(`${baseUrl}${siteBasePath}/notes/?view=outline`);
+  const outlineyLink = page.getByRole("link", { name: /Outliney/ });
+  assert.equal(new URL(await outlineyLink.getAttribute("href")).searchParams.get("view"), "outline");
+  await outlineyLink.click();
+  assert.equal(new URL(page.url()).pathname, `${siteBasePath}/notes/outliney/`);
+  assert.equal(new URL(page.url()).searchParams.get("view"), "outline");
+
+  await context.close();
+});
+
+test("the Links control applies independently in both views", async () => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  await page.goto(`${baseUrl}${siteBasePath}/notes/coding-agents-101/?view=normal`);
+
+  const linkToggle = page.getByRole("checkbox", { name: "Links" });
+  const normalExternalLink = page.locator("[data-view-panel='normal'] a[href^='http']").first();
+  const outlineExternalLink = page.locator("[data-view-panel='outline'] a[href^='http']").first();
+
+  assert.equal(await linkToggle.isChecked(), true);
+  await page.getByText("Links", { exact: true }).click();
+  assert.equal(await linkToggle.isChecked(), false);
+  assert.equal(await normalExternalLink.evaluate((link) => getComputedStyle(link).pointerEvents), "none");
+
+  await page.getByRole("button", { name: "Outline" }).click();
+  assert.equal(await outlineExternalLink.evaluate((link) => getComputedStyle(link).pointerEvents), "none");
+
+  await page.getByText("Links", { exact: true }).click();
+  assert.equal(await linkToggle.isChecked(), true);
+  assert.equal(await outlineExternalLink.evaluate((link) => getComputedStyle(link).pointerEvents), "auto");
+
+  await context.close();
+});
+
+test("the expanded outline remains readable without JavaScript", async () => {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 1280, height: 900 },
+  });
+  const page = await context.newPage();
+  await page.goto(`${baseUrl}${siteBasePath}/notes/coding-agents-101/?view=normal`);
+
+  assert.equal(await page.locator("[data-view-panel='outline']").isVisible(), true);
+  assert.equal(await page.locator("[data-view-panel='normal']").isVisible(), false);
+  assert.equal(await page.locator("[data-outline-controls]").isVisible(), false);
+  assert.equal(await page.locator(".view-switch").isVisible(), false);
+  assert.equal(await page.getByRole("heading", { name: "References" }).isVisible(), true);
+
+  await context.close();
+});
+
 test("every notes page provides accessible outline controls", async () => {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
@@ -105,7 +200,22 @@ test("every notes page provides accessible outline controls", async () => {
     await page.goto(`${baseUrl}${route}`);
 
     const headings = page.locator(".section-heading[role='button']");
+    const topLevelHeadings = page.locator(".section[data-outline-depth='1'] > .section-heading");
+    const nestedHeadings = page.locator(".section:not([data-outline-depth='1']) > .section-heading");
     assert.ok(await headings.count(), route);
+    assert.equal(
+      await topLevelHeadings.evaluateAll((elements) => elements.every((element) => element.getAttribute("aria-expanded") === "true")),
+      true,
+      route,
+    );
+    assert.equal(
+      await nestedHeadings.evaluateAll((elements) => elements.every((element) => element.getAttribute("aria-expanded") === "false")),
+      true,
+      route,
+    );
+
+    const toggleAllButton = page.locator("#toggle-all");
+    assert.equal(await toggleAllButton.textContent(), "Expand all", route);
 
     const firstHeading = headings.first();
     const controlledContent = page.locator(`#${await firstHeading.getAttribute("aria-controls")}`);
@@ -116,19 +226,22 @@ test("every notes page provides accessible outline controls", async () => {
     await firstHeading.press("Enter");
     assert.equal(await firstHeading.getAttribute("aria-expanded"), "false", route);
     assert.equal(await controlledContent.getAttribute("aria-hidden"), "true", route);
+    assert.equal(await controlledContent.getAttribute("inert"), "", route);
 
     await firstHeading.press("Space");
     assert.equal(await firstHeading.getAttribute("aria-expanded"), "true", route);
     assert.equal(await controlledContent.getAttribute("aria-hidden"), "false", route);
+    assert.equal(await controlledContent.getAttribute("inert"), null, route);
 
-    const toggleAllButton = page.locator("#toggle-all");
+    await page.reload();
+    assert.equal(await toggleAllButton.textContent(), "Expand all", route);
+    await toggleAllButton.click();
+    assert.equal(await page.locator(".section-heading[aria-expanded='true']").count(), await headings.count(), route);
     assert.equal(await toggleAllButton.textContent(), "Collapse all", route);
+
     await toggleAllButton.click();
     assert.equal(await page.locator(".section-heading[aria-expanded='false']").count(), await headings.count(), route);
     assert.equal(await toggleAllButton.textContent(), "Expand all", route);
-
-    await toggleAllButton.click();
-    assert.equal(await page.locator(".section-heading[aria-expanded='true']").count(), await headings.count(), route);
   }
 
   await page.close();
@@ -138,19 +251,21 @@ test("every notes page keeps the shared layout on a small screen", async () => {
   const page = await browser.newPage({ viewport: { width: 375, height: 667 } });
 
   for (const route of routes) {
-    await page.goto(`${baseUrl}${route}`);
+    for (const view of ["normal", "outline"]) {
+      await page.goto(`${baseUrl}${route}?view=${view}`);
 
-    const layout = await page.locator("body").evaluate((body) => ({
-      fitsViewport: document.documentElement.scrollWidth <= window.innerWidth,
-      headerDirection: getComputedStyle(body.querySelector(".header-top")).flexDirection,
-      titleSize: getComputedStyle(body.querySelector("h1")).fontSize,
-    }));
+      const layout = await page.locator("body").evaluate((body) => ({
+        fitsViewport: document.documentElement.scrollWidth <= window.innerWidth,
+        headerDirection: getComputedStyle(body.querySelector(".header-top")).flexDirection,
+        titleSize: getComputedStyle(body.querySelector("h1")).fontSize,
+      }));
 
-    assert.deepEqual(layout, {
-      fitsViewport: true,
-      headerDirection: "column",
-      titleSize: "24px",
-    }, route);
+      assert.deepEqual(layout, {
+        fitsViewport: true,
+        headerDirection: "column",
+        titleSize: "24px",
+      }, `${route}?view=${view}`);
+    }
   }
 
   await page.close();

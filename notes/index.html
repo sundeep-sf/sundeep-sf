@@ -4,63 +4,103 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Notes — Sundeep Yedida</title>
+<script>document.documentElement.classList.add("js")</script>
 <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
 
 <header class="site-header">
   <nav class="site-nav" aria-label="Notes">
-    <a href="./">Notes</a>
+    <a href="" data-preserve-view>Notes</a>
   </nav>
   <div class="header-top">
-    <h1>Notes</h1>
+    <div>
+      <h1>Notes</h1>
+
+    </div>
+    <div class="header-actions">
+      <div class="view-switch" role="group" aria-label="View">
+      <button type="button" data-view-option="normal" aria-pressed="false">Normal</button>
+      <button type="button" data-view-option="outline" aria-pressed="true">Outline</button>
+    </div>
+
+    </div>
   </div>
-  <div class="controls">
-    <button id="toggle-all" type="button">Collapse all</button>
+  <div class="controls" data-outline-controls>
+    <button id="toggle-all" type="button">Expand all</button>
   </div>
 </header>
 
-<main>
+<main id="article">
+  <article class="view-panel normal-view" data-view-panel="normal" hidden>
+    <p>Some notes on things I'm thinking about. You can read each page as an ordinary article or as an interactive outline.</p>
+<h2>About this format</h2>
+<p>Outline view lets you scan the structure first and open the sections that interest you. Normal view presents the same information as an ordinary page.</p>
+<p>Some pages also let you hide external links when you want to focus on the content. The notes are a distillation of reading and experience, and the references are available when you want to go deeper.</p>
 
-<div class="intro">
-  <p>Some notes on things I'm thinking about, presented as interactive collapsible outlines. Click any heading to expand or collapse it.</p>
-</div>
+<section class="note-group">
+  <h2>Published notes</h2>
 
-<!-- ABOUT THIS FORMAT -->
-<div class="section">
-  <div class="section-heading expanded" role="button" tabindex="0">
-    <span class="indicator">&#9656;</span>
-    <h2>About this format</h2>
-  </div>
-  <div class="section-content">
-    <p>These notes use a collapsible outline format. Each section can be expanded or collapsed by clicking its heading. The idea is that you can scan the structure first and then drill into what interests you, rather than reading linearly.</p>
-    <p>There is also a toggle to hide external links, if you want to focus on the content without the references. The notes themselves are a distillation of reading and experience, not original research. The references are there so you can go deeper on anything that catches your attention.</p>
-  </div>
-</div>
-
-<!-- NOTES -->
-<div class="section">
-  <div class="section-heading expanded" role="button" tabindex="0">
-    <span class="indicator">&#9656;</span>
-    <h2>Available notes</h2>
-  </div>
-  <div class="section-content">
-
-    <a href="coding-agents-101/" class="note-card">
-      <div class="note-title">Notes on working with coding agents</div>
-      <div class="note-meta">Jun 2026 &middot; Draft</div>
-      <div class="note-desc">Tool-agnostic principles for working with coding agents: context economy, model-task fit, verification, the autonomy spectrum, and more.</div>
-    </a>
-
-    <a href="outliney/" class="note-card">
+    <a href="outliney/" class="note-card" data-preserve-view>
       <div class="note-title">Outliney</div>
       <div class="note-meta">Jun 2026</div>
       <div class="note-desc">Why these notes are presented as collapsible outlines instead of flat documents.</div>
     </a>
+</section>
+<section class="note-group">
+  <h2>Draft notes</h2>
+
+    <a href="coding-agents-101/" class="note-card" data-preserve-view>
+      <div class="note-title">Notes on working with coding agents</div>
+      <div class="note-meta">Jun 2026 &middot; Draft</div>
+      <div class="note-desc">Tool-agnostic principles for working with coding agents, including context economy, model-task fit, verification, and autonomy.</div>
+    </a>
+</section>
+  </article>
+  <article class="view-panel outline-view" data-view-panel="outline">
+    <p>Some notes on things I'm thinking about. You can read each page as an ordinary article or as an interactive outline.</p>
+
+<section class="section" data-outline-depth="1">
+  <div class="section-heading expanded" role="button" tabindex="0">
+    <span class="indicator" aria-hidden="true">&#9656;</span>
+    <h2>About this format</h2>
+  </div>
+  <div class="section-content">
+    <p>Outline view lets you scan the structure first and open the sections that interest you. Normal view presents the same information as an ordinary page.</p>
+<p>Some pages also let you hide external links when you want to focus on the content. The notes are a distillation of reading and experience, and the references are available when you want to go deeper.</p>
+
 
   </div>
-</div>
+</section>
+<section class="section" data-outline-depth="1">
+  <div class="section-heading expanded" role="button" tabindex="0">
+    <span class="indicator" aria-hidden="true">&#9656;</span>
+    <h2>Published notes</h2>
+  </div>
+  <div class="section-content">
 
+    <a href="outliney/" class="note-card" data-preserve-view>
+      <div class="note-title">Outliney</div>
+      <div class="note-meta">Jun 2026</div>
+      <div class="note-desc">Why these notes are presented as collapsible outlines instead of flat documents.</div>
+    </a>
+  </div>
+</section>
+<section class="section" data-outline-depth="1">
+  <div class="section-heading expanded" role="button" tabindex="0">
+    <span class="indicator" aria-hidden="true">&#9656;</span>
+    <h2>Draft notes</h2>
+  </div>
+  <div class="section-content">
+
+    <a href="coding-agents-101/" class="note-card" data-preserve-view>
+      <div class="note-title">Notes on working with coding agents</div>
+      <div class="note-meta">Jun 2026 &middot; Draft</div>
+      <div class="note-desc">Tool-agnostic principles for working with coding agents, including context economy, model-task fit, verification, and autonomy.</div>
+    </a>
+  </div>
+</section>
+  </article>
 </main>
 
 <script src="assets/outline.js"></script>

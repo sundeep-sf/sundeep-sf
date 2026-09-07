@@ -1,66 +1,135 @@
-function toggleSection(heading) {
-  const content = heading.nextElementSibling;
-  const isExpanded = heading.getAttribute("aria-expanded") === "true";
+const validViews = new Set(["normal", "outline"]);
+const viewPreferenceKey = "notes-view";
 
-  if (isExpanded) {
+function readSavedView() {
+  try {
+    const savedView = localStorage.getItem(viewPreferenceKey);
+    return validViews.has(savedView) ? savedView : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveView(view) {
+  try {
+    localStorage.setItem(viewPreferenceKey, view);
+  } catch {
+    // The selected view still applies when storage is unavailable.
+  }
+}
+
+function updateInternalLinks(view) {
+  document.querySelectorAll("a[href]").forEach((link) => {
+    const url = new URL(link.getAttribute("href"), window.location.href);
+    if (url.origin !== window.location.origin || !["http:", "https:"].includes(url.protocol)) {
+      return;
+    }
+    url.searchParams.set("view", view);
+    link.href = url.toString();
+  });
+}
+
+function applyView(view, { save = false, scroll = false } = {}) {
+  document.querySelectorAll("[data-view-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.viewPanel !== view;
+  });
+  document.querySelectorAll("[data-view-option]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.viewOption === view));
+  });
+
+  const outlineControls = document.querySelector("[data-outline-controls]");
+  if (outlineControls) {
+    outlineControls.hidden = view !== "outline";
+  }
+
+  const url = new URL(window.location.href);
+  url.searchParams.set("view", view);
+  history.replaceState(null, "", url);
+  updateInternalLinks(view);
+
+  if (save) {
+    saveView(view);
+  }
+  if (scroll) {
+    window.scrollTo(0, 0);
+  }
+}
+
+function setSectionState(heading, expanded, animate = true) {
+  const content = heading.nextElementSibling;
+  if (!content) return;
+
+  if (animate && !expanded) {
     content.style.maxHeight = `${content.scrollHeight}px`;
     requestAnimationFrame(() => {
       content.style.maxHeight = "0";
       content.style.opacity = "0";
     });
-    heading.classList.remove("expanded");
-    heading.classList.add("collapsed");
-    heading.setAttribute("aria-expanded", "false");
-    content.setAttribute("aria-hidden", "true");
   } else {
-    content.style.maxHeight = `${content.scrollHeight}px`;
-    content.style.opacity = "1";
-    heading.classList.remove("collapsed");
-    heading.classList.add("expanded");
-    heading.setAttribute("aria-expanded", "true");
-    content.setAttribute("aria-hidden", "false");
-    setTimeout(() => {
-      content.style.maxHeight = "none";
-    }, 300);
+    content.style.maxHeight = expanded ? "none" : "0";
+    content.style.opacity = expanded ? "1" : "0";
   }
+
+  heading.classList.toggle("expanded", expanded);
+  heading.classList.toggle("collapsed", !expanded);
+  heading.setAttribute("aria-expanded", String(expanded));
+  content.setAttribute("aria-hidden", String(!expanded));
+  content.inert = !expanded;
 }
 
-document.querySelectorAll(".section-heading").forEach((heading, index) => {
+const outlineHeadings = [...document.querySelectorAll("[data-view-panel='outline'] .section-heading")];
+const toggleAllButton = document.getElementById("toggle-all");
+
+function updateGlobalAction() {
+  if (!toggleAllButton) return;
+  const allExpanded = outlineHeadings.every(
+    (heading) => heading.getAttribute("aria-expanded") === "true",
+  );
+  toggleAllButton.textContent = allExpanded ? "Collapse all" : "Expand all";
+}
+
+outlineHeadings.forEach((heading, index) => {
   const content = heading.nextElementSibling;
+  const section = heading.closest(".section");
   const contentId = content.id || `outline-section-${index + 1}`;
+  const startsExpanded = section?.dataset.outlineDepth === "1";
 
   content.id = contentId;
-  content.style.maxHeight = "none";
-  content.style.opacity = "1";
-  content.setAttribute("aria-hidden", "false");
   heading.setAttribute("aria-controls", contentId);
-  heading.setAttribute("aria-expanded", "true");
-  heading.addEventListener("click", () => toggleSection(heading));
+  setSectionState(heading, startsExpanded, false);
+
+  const toggle = () => {
+    const isExpanded = heading.getAttribute("aria-expanded") === "true";
+    setSectionState(heading, !isExpanded);
+    updateGlobalAction();
+  };
+
+  heading.addEventListener("click", toggle);
   heading.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      toggleSection(heading);
+      toggle();
     }
   });
 });
 
-const toggleAllButton = document.getElementById("toggle-all");
-let allExpanded = true;
-
 toggleAllButton?.addEventListener("click", () => {
-  allExpanded = !allExpanded;
-  document.querySelectorAll(".section-heading").forEach((heading) => {
-    const content = heading.nextElementSibling;
-    content.style.maxHeight = allExpanded ? "none" : "0";
-    content.style.opacity = allExpanded ? "1" : "0";
-    heading.classList.toggle("collapsed", !allExpanded);
-    heading.classList.toggle("expanded", allExpanded);
-    heading.setAttribute("aria-expanded", String(allExpanded));
-    content.setAttribute("aria-hidden", String(!allExpanded));
-  });
-  toggleAllButton.textContent = allExpanded ? "Collapse all" : "Expand all";
+  const expand = toggleAllButton.textContent === "Expand all";
+  outlineHeadings.forEach((heading) => setSectionState(heading, expand, false));
+  toggleAllButton.textContent = expand ? "Collapse all" : "Expand all";
 });
 
-function toggleLinks(show) {
-  document.getElementById("article")?.classList.toggle("links-hidden", !show);
-}
+document.querySelectorAll("[data-view-option]").forEach((button) => {
+  button.addEventListener("click", () => {
+    applyView(button.dataset.viewOption, { save: true, scroll: true });
+  });
+});
+
+const linkToggle = document.getElementById("link-toggle");
+linkToggle?.addEventListener("change", () => {
+  document.getElementById("article")?.classList.toggle("links-hidden", !linkToggle.checked);
+});
+
+const requestedView = new URL(window.location.href).searchParams.get("view");
+const initialView = validViews.has(requestedView) ? requestedView : readSavedView() || "outline";
+applyView(initialView);
