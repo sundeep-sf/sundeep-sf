@@ -10,7 +10,7 @@ Each note has a raw Markdown file and a generated outline Markdown file. The raw
 4. Run `npm run build` to update the static HTML.
 5. Run `npm test` before opening the pull request.
 
-Use `published` or `draft` for the status. The homepage lists published notes first, then drafts. Notes within each group appear from newest to oldest.
+Use `published` or `draft` for the status. The homepage lists all notes from newest to oldest and labels drafts.
 
 The authoring agent should update only the outline sections affected by a raw content change when possible. It must then update `source_digest` before publishing.
 

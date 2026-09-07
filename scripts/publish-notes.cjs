@@ -133,30 +133,25 @@ function renderNoteCards(notes, linkPrefix) {
   }).join("");
 }
 
-function renderHomepageGroups(notes, outlined) {
-  const groups = [
-    ["Published notes", notes.filter(({ metadata }) => metadata.status === "published")],
-    ["Draft notes", notes.filter(({ metadata }) => metadata.status === "draft")],
-  ].filter(([, groupNotes]) => groupNotes.length > 0);
-
+function renderHomepagePosts(notes, outlined) {
   if (!outlined) {
-    return groups.map(([title, groupNotes]) => `
+    return `
 <section class="note-group">
-  <h2>${title}</h2>
-  ${renderNoteCards(groupNotes, "")}
-</section>`).join("");
+  <h2>Latest notes</h2>
+  ${renderNoteCards(notes, "")}
+</section>`;
   }
 
-  return groups.map(([title, groupNotes]) => `
+  return `
 <section class="section" data-outline-depth="1">
   <div class="section-heading expanded" role="button" tabindex="0">
     <span class="indicator" aria-hidden="true">&#9656;</span>
-    <h2>${title}</h2>
+    <h2>Latest notes</h2>
   </div>
   <div class="section-content">
-    ${renderNoteCards(groupNotes, "")}
+    ${renderNoteCards(notes, "")}
   </div>
-</section>`).join("");
+</section>`;
 }
 
 function renderViewSwitch() {
@@ -166,8 +161,15 @@ function renderViewSwitch() {
     </div>`;
 }
 
-function renderPage({ assetPrefix, hasLinkToggle = false, metadata, normalHtml, outlineHtml }) {
-  const title = metadata?.title || "Notes";
+function renderPage({
+  assetPrefix,
+  hasLinkToggle = false,
+  metadata,
+  normalHtml,
+  outlineHtml,
+  showOutlineControls = true,
+}) {
+  const title = metadata?.title || "Sundeep's Notes";
   let meta = "";
   if (metadata?.author) {
     const author = metadata.author_url
@@ -196,7 +198,7 @@ function renderPage({ assetPrefix, hasLinkToggle = false, metadata, normalHtml, 
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${escapeHtml(title)}${metadata ? " — Notes" : " — Sundeep Yedida"}</title>
+<title>${escapeHtml(title)}${metadata ? " — Notes" : ""}</title>
 <script>document.documentElement.classList.add("js")</script>
 <link rel="stylesheet" href="${assetPrefix}assets/site.css">
 </head>
@@ -216,9 +218,9 @@ function renderPage({ assetPrefix, hasLinkToggle = false, metadata, normalHtml, 
       ${links}
     </div>
   </div>
-  <div class="controls" data-outline-controls>
+  ${showOutlineControls ? `<div class="controls" data-outline-controls>
     <button id="toggle-all" type="button">Expand all</button>
-  </div>
+  </div>` : ""}
 </header>
 
 <main id="article">
@@ -252,8 +254,8 @@ function writeGeneratedFile(filePath, contents) {
 function publish() {
   const notes = loadNotes().sort((left, right) => {
     const statusOrder = { published: 0, draft: 1 };
-    const statusDifference = statusOrder[left.metadata.status] - statusOrder[right.metadata.status];
-    return statusDifference || new Date(right.metadata.date) - new Date(left.metadata.date);
+    const dateDifference = new Date(right.metadata.date) - new Date(left.metadata.date);
+    return dateDifference || statusOrder[left.metadata.status] - statusOrder[right.metadata.status];
   });
   const home = readMarkdown(path.join(contentRoot, "home.md"));
   const homeOutline = readMarkdown(path.join(contentRoot, "home-outline.md"));
@@ -261,11 +263,16 @@ function publish() {
     throw new Error("Homepage outline is stale. Update it from the current raw homepage source.");
   }
 
-  const normalHome = `${markdown.render(home.content)}${renderHomepageGroups(notes, false)}`;
-  const outlineHome = `${renderOutline(homeOutline.content)}${renderHomepageGroups(notes, true)}`;
+  const normalHome = `${renderHomepagePosts(notes, false)}<footer class="home-note">${markdown.render(home.content)}</footer>`;
+  const outlineHome = `${renderHomepagePosts(notes, true)}<footer class="home-note">${renderOutline(homeOutline.content)}</footer>`;
   writeGeneratedFile(
     path.join(outputRoot, "notes", "index.html"),
-    renderPage({ assetPrefix: "", normalHtml: normalHome, outlineHtml: outlineHome }),
+    renderPage({
+      assetPrefix: "",
+      normalHtml: normalHome,
+      outlineHtml: outlineHome,
+      showOutlineControls: false,
+    }),
   );
 
   for (const note of notes) {

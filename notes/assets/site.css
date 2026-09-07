@@ -286,6 +286,18 @@ main a:hover {
   margin-bottom: 28px;
 }
 
+.home-note {
+  border-top: 1px solid var(--line);
+  color: var(--fg-dim);
+  font-size: 14px;
+  margin-top: 32px;
+  padding-top: 16px;
+}
+
+.home-note p:last-child {
+  margin-bottom: 0;
+}
+
 .section {
   border-left: 2px solid var(--line);
   margin-bottom: 8px;
