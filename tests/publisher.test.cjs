@@ -225,7 +225,13 @@ test("publishing renders both views and builds the homepage from note metadata",
   assert.match(notePage, /Outline article text/);
 
   const homepage = fs.readFileSync(path.join(outputRoot, "notes", "index.html"), "utf8");
+  assert.match(homepage, /<title>Sundeep's Notes<\/title>/);
+  assert.match(homepage, /<h1>Sundeep's Notes<\/h1>/);
+  assert.equal(homepage.match(/<h2>Latest notes<\/h2>/g).length, 2);
+  assert.doesNotMatch(homepage, /Published notes|Draft notes/);
+  assert.ok(homepage.indexOf("Draft note") < homepage.indexOf("Newer published note"));
   assert.ok(homepage.indexOf("Newer published note") < homepage.indexOf("Older published note"));
-  assert.ok(homepage.indexOf("Older published note") < homepage.indexOf("Draft note"));
   assert.match(homepage, /Draft/);
+  assert.ok(homepage.indexOf("Older published note") < homepage.indexOf("Welcome to the notes"));
+  assert.doesNotMatch(homepage, /id="toggle-all"/);
 });

@@ -196,7 +196,12 @@ test("the expanded outline remains readable without JavaScript", async () => {
 test("every notes page provides accessible outline controls", async () => {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
-  for (const route of routes) {
+  await page.goto(`${baseUrl}${siteBasePath}/notes/`);
+  assert.equal(await page.getByRole("heading", { name: "Sundeep's Notes" }).count(), 1);
+  assert.equal(await page.locator("#toggle-all").count(), 0);
+  assert.equal(await page.locator(".section-heading[role='button']").count(), 1);
+
+  for (const route of routes.slice(1)) {
     await page.goto(`${baseUrl}${route}`);
 
     const headings = page.locator(".section-heading[role='button']");
