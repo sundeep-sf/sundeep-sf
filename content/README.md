@@ -1,5 +1,9 @@
 # Publishing notes
 
+The blog has moved to [sundeep-sf/sundeep-sf.github.io](https://github.com/sundeep-sf/sundeep-sf.github.io). Make all future content changes there. This repository retains the historical sources and tests for reference. Its `npm run build` command now generates redirects for the old URLs, and `npm test` checks those redirects.
+
+The original authoring instructions below apply in the new repository.
+
 Each note has a raw Markdown file and a generated outline Markdown file. The raw file is the source of truth. The outline must contain the same information, although its headings may organize the information differently.
 
 ## Add or update a note

@@ -4,7 +4,7 @@
   "scripts": {
     "build": "node scripts/publish-notes.cjs",
     "build:check": "node scripts/publish-notes.cjs --check",
-    "test": "npm run build:check && node --test tests/publisher.test.cjs tests/site.test.cjs"
+    "test": "npm run build:check && node --test tests/redirects.test.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"
